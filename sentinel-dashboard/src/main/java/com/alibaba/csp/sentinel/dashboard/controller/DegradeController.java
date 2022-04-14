@@ -72,7 +72,9 @@ public class DegradeController {
             return Result.ofFail(-1, "port can't be null");
         }
         try {
+            // TODO 可拓展点
             List<DegradeRuleEntity> rules = sentinelApiClient.fetchDegradeRuleOfMachine(app, ip, port);
+            // TODO 可拓展点
             rules = repository.saveAll(rules);
             return Result.ofSuccess(rules);
         } catch (Throwable throwable) {
@@ -92,11 +94,13 @@ public class DegradeController {
         entity.setGmtCreate(date);
         entity.setGmtModified(date);
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
         } catch (Throwable t) {
             logger.error("Failed to add new degrade rule, app={}, ip={}", entity.getApp(), entity.getIp(), t);
             return Result.ofThrowable(-1, t);
         }
+        // TODO 可拓展点
         if (!publishRules(entity.getApp(), entity.getIp(), entity.getPort())) {
             logger.warn("Publish degrade rules failed, app={}", entity.getApp());
         }
@@ -110,6 +114,7 @@ public class DegradeController {
         if (id == null || id <= 0) {
             return Result.ofFail(-1, "id can't be null or negative");
         }
+        // TODO 可拓展点
         DegradeRuleEntity oldEntity = repository.findById(id);
         if (oldEntity == null) {
             return Result.ofFail(-1, "Degrade rule does not exist, id=" + id);
@@ -126,11 +131,13 @@ public class DegradeController {
         entity.setGmtCreate(oldEntity.getGmtCreate());
         entity.setGmtModified(new Date());
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
         } catch (Throwable t) {
             logger.error("Failed to save degrade rule, id={}, rule={}", id, entity, t);
             return Result.ofThrowable(-1, t);
         }
+        // TODO 可拓展点
         if (!publishRules(entity.getApp(), entity.getIp(), entity.getPort())) {
             logger.warn("Publish degrade rules failed, app={}", entity.getApp());
         }
@@ -144,17 +151,20 @@ public class DegradeController {
             return Result.ofFail(-1, "id can't be null");
         }
 
+        // TODO 可拓展点
         DegradeRuleEntity oldEntity = repository.findById(id);
         if (oldEntity == null) {
             return Result.ofSuccess(null);
         }
 
         try {
+            // TODO 可拓展点
             repository.delete(id);
         } catch (Throwable throwable) {
             logger.error("Failed to delete degrade rule, id={}", id, throwable);
             return Result.ofThrowable(-1, throwable);
         }
+        // TODO 可拓展点
         if (!publishRules(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort())) {
             logger.warn("Publish degrade rules failed, app={}", oldEntity.getApp());
         }

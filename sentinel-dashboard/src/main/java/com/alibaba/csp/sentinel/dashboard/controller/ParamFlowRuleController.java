@@ -97,7 +97,9 @@ public class ParamFlowRuleController {
             return unsupportedVersion();
         }
         try {
+            // TODO 可拓展点
             return sentinelApiClient.fetchParamFlowRulesOfMachine(app, ip, port)
+                    // TODO 可拓展点
                 .thenApply(repository::saveAll)
                 .thenApply(Result::ofSuccess)
                 .get();
@@ -134,7 +136,9 @@ public class ParamFlowRuleController {
         entity.setGmtCreate(date);
         entity.setGmtModified(date);
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
+            // TODO 可拓展点
             publishRules(entity.getApp(), entity.getIp(), entity.getPort()).get();
             return Result.ofSuccess(entity);
         } catch (ExecutionException ex) {
@@ -194,6 +198,7 @@ public class ParamFlowRuleController {
         if (id == null || id <= 0) {
             return Result.ofFail(-1, "Invalid id");
         }
+        // TODO 可拓展点
         ParamFlowRuleEntity oldEntity = repository.findById(id);
         if (oldEntity == null) {
             return Result.ofFail(-1, "id " + id + " does not exist");
@@ -211,7 +216,9 @@ public class ParamFlowRuleController {
         entity.setGmtCreate(oldEntity.getGmtCreate());
         entity.setGmtModified(date);
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
+            // TODO 可拓展点
             publishRules(entity.getApp(), entity.getIp(), entity.getPort()).get();
             return Result.ofSuccess(entity);
         } catch (ExecutionException ex) {
@@ -233,13 +240,16 @@ public class ParamFlowRuleController {
         if (id == null) {
             return Result.ofFail(-1, "id cannot be null");
         }
+        // TODO 可拓展点
         ParamFlowRuleEntity oldEntity = repository.findById(id);
         if (oldEntity == null) {
             return Result.ofSuccess(null);
         }
 
         try {
+            // TODO 可拓展点
             repository.delete(id);
+            // TODO 可拓展点
             publishRules(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort()).get();
             return Result.ofSuccess(id);
         } catch (ExecutionException ex) {

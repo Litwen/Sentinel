@@ -74,7 +74,9 @@ public class SystemController {
             return checkResult;
         }
         try {
+            // TODO 可拓展点
             List<SystemRuleEntity> rules = sentinelApiClient.fetchSystemRuleOfMachine(app, ip, port);
+            // TODO 可拓展点
             rules = repository.saveAll(rules);
             return Result.ofSuccess(rules);
         } catch (Throwable throwable) {
@@ -148,11 +150,13 @@ public class SystemController {
         entity.setGmtCreate(date);
         entity.setGmtModified(date);
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
         } catch (Throwable throwable) {
             logger.error("Add SystemRule error", throwable);
             return Result.ofThrowable(-1, throwable);
         }
+        // TODO 可拓展点
         if (!publishRules(app, ip, port)) {
             logger.warn("Publish system rules fail after rule add");
         }
@@ -166,6 +170,7 @@ public class SystemController {
         if (id == null) {
             return Result.ofFail(-1, "id can't be null");
         }
+        // TODO 可拓展点
         SystemRuleEntity entity = repository.findById(id);
         if (entity == null) {
             return Result.ofFail(-1, "id " + id + " dose not exist");
@@ -210,11 +215,13 @@ public class SystemController {
         Date date = new Date();
         entity.setGmtModified(date);
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
         } catch (Throwable throwable) {
             logger.error("save error:", throwable);
             return Result.ofThrowable(-1, throwable);
         }
+        // TODO 可拓展点
         if (!publishRules(entity.getApp(), entity.getIp(), entity.getPort())) {
             logger.info("publish system rules fail after rule update");
         }
@@ -227,16 +234,19 @@ public class SystemController {
         if (id == null) {
             return Result.ofFail(-1, "id can't be null");
         }
+        // TODO 可拓展点
         SystemRuleEntity oldEntity = repository.findById(id);
         if (oldEntity == null) {
             return Result.ofSuccess(null);
         }
         try {
+            // TODO 可拓展点
             repository.delete(id);
         } catch (Throwable throwable) {
             logger.error("delete error:", throwable);
             return Result.ofThrowable(-1, throwable);
         }
+        // TODO 可拓展点
         if (!publishRules(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort())) {
             logger.info("publish system rules fail after rule delete");
         }

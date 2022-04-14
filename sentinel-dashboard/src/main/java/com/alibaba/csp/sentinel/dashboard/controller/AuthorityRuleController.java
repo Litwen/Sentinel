@@ -72,7 +72,9 @@ public class AuthorityRuleController {
             return Result.ofFail(-1, "Invalid parameter: port");
         }
         try {
+            // TODO 可拓展点
             List<AuthorityRuleEntity> rules = sentinelApiClient.fetchAuthorityRulesOfMachine(app, ip, port);
+            // TODO 可拓展点
             rules = repository.saveAll(rules);
             return Result.ofSuccess(rules);
         } catch (Throwable throwable) {
@@ -122,11 +124,13 @@ public class AuthorityRuleController {
         entity.setGmtCreate(date);
         entity.setGmtModified(date);
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
         } catch (Throwable throwable) {
             logger.error("Failed to add authority rule", throwable);
             return Result.ofThrowable(-1, throwable);
         }
+        // TODO 可拓展点
         if (!publishRules(entity.getApp(), entity.getIp(), entity.getPort())) {
             logger.info("Publish authority rules failed after rule add");
         }
@@ -149,6 +153,7 @@ public class AuthorityRuleController {
         entity.setGmtCreate(null);
         entity.setGmtModified(date);
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
             if (entity == null) {
                 return Result.ofFail(-1, "Failed to save authority rule");
@@ -157,6 +162,7 @@ public class AuthorityRuleController {
             logger.error("Failed to save authority rule", throwable);
             return Result.ofThrowable(-1, throwable);
         }
+        // TODO 可拓展点
         if (!publishRules(entity.getApp(), entity.getIp(), entity.getPort())) {
             logger.info("Publish authority rules failed after rule update");
         }
@@ -174,10 +180,12 @@ public class AuthorityRuleController {
             return Result.ofSuccess(null);
         }
         try {
+            // TODO 可拓展点
             repository.delete(id);
         } catch (Exception e) {
             return Result.ofFail(-1, e.getMessage());
         }
+        // TODO 可拓展点
         if (!publishRules(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort())) {
             logger.error("Publish authority rules failed after rule delete");
         }
