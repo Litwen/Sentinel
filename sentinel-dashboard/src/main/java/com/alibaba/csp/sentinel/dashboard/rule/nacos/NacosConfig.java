@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * @author Eric Zhao
@@ -36,7 +37,7 @@ public class NacosConfig {
 
     @Bean
     public Converter<List<FlowRuleEntity>, String> flowRuleEntityEncoder() {
-        return JSON::toJSONString;
+        return source -> JSON.toJSONString(source.stream().map(flowRuleEntity -> flowRuleEntity.toRule()).collect(Collectors.toList()));
     }
 
     @Bean

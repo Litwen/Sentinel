@@ -81,7 +81,7 @@ public class FlowControllerV1 {
             // 根据ip地址去拿流控规则
             // TODO(已完成) 改造点 需要到配置中心去拿
             // List<FlowRuleEntity> rules = sentinelApiClient.fetchFlowRuleOfMachine(app, ip, port);
-            List<FlowRuleEntity> rules = ruleProvider.getRules(app);
+            List<FlowRuleEntity> rules = ruleProvider.getRules(app, ip, port);
 
             // 拿到后，save到缓存(本机)中
             // TODO 可拓展点
