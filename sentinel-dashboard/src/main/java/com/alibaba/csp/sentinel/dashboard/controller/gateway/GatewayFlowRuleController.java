@@ -27,10 +27,13 @@ import com.alibaba.csp.sentinel.dashboard.domain.vo.gateway.rule.AddFlowRuleReqV
 import com.alibaba.csp.sentinel.dashboard.domain.vo.gateway.rule.GatewayParamFlowItemVo;
 import com.alibaba.csp.sentinel.dashboard.domain.vo.gateway.rule.UpdateFlowRuleReqVo;
 import com.alibaba.csp.sentinel.dashboard.repository.gateway.InMemGatewayFlowRuleStore;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRuleProvider;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRulePublisher;
 import com.alibaba.csp.sentinel.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -59,6 +62,14 @@ public class GatewayFlowRuleController {
     @Autowired
     private SentinelApiClient sentinelApiClient;
 
+    @Autowired
+    @Qualifier("gatewayFlowRuleProvider")
+    private DynamicRuleProvider<List<GatewayFlowRuleEntity>> ruleProvider;
+
+    @Autowired
+    @Qualifier("gatewayFlowRulePublisher")
+    private DynamicRulePublisher<List<GatewayFlowRuleEntity>> rulePublisher;
+
     @GetMapping("/list.json")
     @AuthAction(AuthService.PrivilegeType.READ_RULE)
     public Result<List<GatewayFlowRuleEntity>> queryFlowRules(String app, String ip, Integer port) {
@@ -74,7 +85,10 @@ public class GatewayFlowRuleController {
         }
 
         try {
-            List<GatewayFlowRuleEntity> rules = sentinelApiClient.fetchGatewayFlowRules(app, ip, port).get();
+            // TODO(已拓展) 可拓展点
+            //List<GatewayFlowRuleEntity> rules = sentinelApiClient.fetchGatewayFlowRules(app, ip, port).get();
+            List<GatewayFlowRuleEntity> rules = ruleProvider.getRules(app, ip, port);
+            // TODO 可拓展点
             repository.saveAll(rules);
             return Result.ofSuccess(rules);
         } catch (Throwable throwable) {
@@ -237,12 +251,14 @@ public class GatewayFlowRuleController {
         entity.setGmtModified(date);
 
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
         } catch (Throwable throwable) {
             logger.error("add gateway flow rule error:", throwable);
             return Result.ofThrowable(-1, throwable);
         }
 
+        // TODO(已拓展) 可拓展点
         if (!publishRules(app, ip, port)) {
             logger.warn("publish gateway flow rules fail after add");
         }
@@ -264,6 +280,7 @@ public class GatewayFlowRuleController {
             return Result.ofFail(-1, "id can't be null");
         }
 
+        // TODO 可拓展点
         GatewayFlowRuleEntity entity = repository.findById(id);
         if (entity == null) {
             return Result.ofFail(-1, "gateway flow rule does not exist, id=" + id);
@@ -383,12 +400,14 @@ public class GatewayFlowRuleController {
         entity.setGmtModified(date);
 
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
         } catch (Throwable throwable) {
             logger.error("update gateway flow rule error:", throwable);
             return Result.ofThrowable(-1, throwable);
         }
 
+        // TODO(已拓展) 可拓展点
         if (!publishRules(app, entity.getIp(), entity.getPort())) {
             logger.warn("publish gateway flow rules fail after update");
         }
@@ -405,18 +424,21 @@ public class GatewayFlowRuleController {
             return Result.ofFail(-1, "id can't be null");
         }
 
+        // TODO 可拓展点
         GatewayFlowRuleEntity oldEntity = repository.findById(id);
         if (oldEntity == null) {
             return Result.ofSuccess(null);
         }
 
         try {
+            // TODO 可拓展点
             repository.delete(id);
         } catch (Throwable throwable) {
             logger.error("delete gateway flow rule error:", throwable);
             return Result.ofThrowable(-1, throwable);
         }
 
+        // TODO(已拓展) 可拓展点
         if (!publishRules(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort())) {
             logger.warn("publish gateway flow rules fail after delete");
         }
@@ -425,7 +447,14 @@ public class GatewayFlowRuleController {
     }
 
     private boolean publishRules(String app, String ip, Integer port) {
+        // TODO 可拓展点
         List<GatewayFlowRuleEntity> rules = repository.findAllByMachine(MachineInfo.of(app, ip, port));
-        return sentinelApiClient.modifyGatewayFlowRules(app, ip, port, rules);
+        // TODO(已拓展) 可拓展点
+        try {
+            return rulePublisher.isPublish(app, rules);
+        } catch (Exception e) {
+            logger.warn("publish gateway flow rules failed");
+            return false;
+        }
     }
 }

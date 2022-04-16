@@ -20,16 +20,20 @@ import com.alibaba.csp.sentinel.dashboard.auth.AuthService;
 import com.alibaba.csp.sentinel.dashboard.client.SentinelApiClient;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.gateway.ApiDefinitionEntity;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.gateway.ApiPredicateItemEntity;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.gateway.GatewayFlowRuleEntity;
 import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
 import com.alibaba.csp.sentinel.dashboard.domain.Result;
 import com.alibaba.csp.sentinel.dashboard.domain.vo.gateway.api.AddApiReqVo;
 import com.alibaba.csp.sentinel.dashboard.domain.vo.gateway.api.ApiPredicateItemVo;
 import com.alibaba.csp.sentinel.dashboard.domain.vo.gateway.api.UpdateApiReqVo;
 import com.alibaba.csp.sentinel.dashboard.repository.gateway.InMemApiDefinitionStore;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRuleProvider;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRulePublisher;
 import com.alibaba.csp.sentinel.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,6 +60,14 @@ public class GatewayApiController {
     @Autowired
     private SentinelApiClient sentinelApiClient;
 
+    @Autowired
+    @Qualifier("gatewayApiRuleProvider")
+    private DynamicRuleProvider<List<ApiDefinitionEntity>> ruleProvider;
+
+    @Autowired
+    @Qualifier("gatewayApiRulePublisher")
+    private DynamicRulePublisher<List<ApiDefinitionEntity>> rulePublisher;
+
     @GetMapping("/list.json")
     @AuthAction(AuthService.PrivilegeType.READ_RULE)
     public Result<List<ApiDefinitionEntity>> queryApis(String app, String ip, Integer port) {
@@ -71,7 +83,10 @@ public class GatewayApiController {
         }
 
         try {
-            List<ApiDefinitionEntity> apis = sentinelApiClient.fetchApis(app, ip, port).get();
+            // TODO(已拓展) 可拓展点
+            //List<ApiDefinitionEntity> apis = sentinelApiClient.fetchApis(app, ip, port).get();
+            List<ApiDefinitionEntity> apis = ruleProvider.getRules(app, ip, port);
+            // TODO 可拓展点
             repository.saveAll(apis);
             return Result.ofSuccess(apis);
         } catch (Throwable throwable) {
@@ -150,12 +165,14 @@ public class GatewayApiController {
         entity.setGmtModified(date);
 
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
         } catch (Throwable throwable) {
             logger.error("add gateway api error:", throwable);
             return Result.ofThrowable(-1, throwable);
         }
 
+        // TODO(已拓展) 可拓展点
         if (!publishApis(app, ip, port)) {
             logger.warn("publish gateway apis fail after add");
         }
@@ -176,6 +193,7 @@ public class GatewayApiController {
             return Result.ofFail(-1, "id can't be null");
         }
 
+        // TODO 可拓展点
         ApiDefinitionEntity entity = repository.findById(id);
         if (entity == null) {
             return Result.ofFail(-1, "api does not exist, id=" + id);
@@ -213,12 +231,14 @@ public class GatewayApiController {
         entity.setGmtModified(date);
 
         try {
+            // TODO 可拓展点
             entity = repository.save(entity);
         } catch (Throwable throwable) {
             logger.error("update gateway api error:", throwable);
             return Result.ofThrowable(-1, throwable);
         }
 
+        // TODO(已拓展) 可拓展点
         if (!publishApis(app, entity.getIp(), entity.getPort())) {
             logger.warn("publish gateway apis fail after update");
         }
@@ -240,12 +260,14 @@ public class GatewayApiController {
         }
 
         try {
+            // TODO 可拓展点
             repository.delete(id);
         } catch (Throwable throwable) {
             logger.error("delete gateway api error:", throwable);
             return Result.ofThrowable(-1, throwable);
         }
 
+        // TODO(已拓展) 可拓展点
         if (!publishApis(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort())) {
             logger.warn("publish gateway apis fail after delete");
         }
@@ -254,7 +276,14 @@ public class GatewayApiController {
     }
 
     private boolean publishApis(String app, String ip, Integer port) {
+        // TODO 可拓展点
         List<ApiDefinitionEntity> apis = repository.findAllByMachine(MachineInfo.of(app, ip, port));
-        return sentinelApiClient.modifyApis(app, ip, port, apis);
+        // TODO(已拓展) 可拓展点
+        try {
+            return rulePublisher.isPublish(app, apis);
+        } catch (Exception e) {
+            logger.warn("publish Api Definition rules failed");
+            return false;
+        }
     }
 }
